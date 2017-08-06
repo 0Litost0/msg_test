@@ -1,0 +1,60 @@
+/*****************************************************************
+@简介：创建相关的客户端进程，负责从服务器创建的线管消息队列中接收发送相关的消息
+****************************************************************/
+int main(int argc, char *argv[])
+{
+	if (argc != 2)
+	{
+		printf("Please input the correct protocol that you want to rscv!\n")
+		exit(1);
+	}
+	char path[256];
+	key_t read_msg_key = 0;
+	key_t write_msg_key = 0;
+	int read_msg_id = 0;
+	int write_msg_id = 0;
+	struct msg_form msg;
+	memset(msg.mtext, 0, sizeof(msg.mtext));
+	sprintf(path, "%s/etc/config.ini", (char*)getenv("HOME") );	
+	if ((write_msg_key = ftok( path, IPC_WRITE_KEY) < 0)
+	{
+		perror("write_msg_key ftok error\n");
+		exit(2);
+	}
+	if ((write_msg_id = msgget(write_msg_key, IPC_CREAT|0777)) == -1)
+	{
+		perror("write_msg_id msgget error\n");
+		exit(1);
+	}	
+	printf("write_msg_id is: %d\n", write_msg_id);		
+
+	if ((read_msg_key = ftok( path, IPC_READ_KEY)) < 0)
+	{	
+		perror("read_msg_key ftok error\n");
+		exit(2);		
+	}
+	if ((read_msg_id = msgget(read_msg_key, IPC_CREAT|0777)) == -1)
+	{
+		perror("read_msg_id msgget error\n");
+		exit(1);
+	}	
+	printf("read_msg_id is: %d\n", read_msg_id);
+	//获取对应消息队列的id
+	//从消息队列中接收对应消息
+	if (strcmp(argv[1], "1") == 0)
+	{
+		 msgrcv(read_msg_id, &msg, sizeof(msg.mtext), (long)COMMUNICATION_PROTO_1, 0);
+		 msgsnd(write_msg_id, &msg, sizeof(msg.mtext), 0);
+		
+	}
+	else if(strcmp(argv[1], "2")
+	{
+		msgrcv(read_msg_id, &msg, sizeof(msg.mtext), (long)COMMUNICATION_PROTO_2, 0);
+		msgsnd(write_msg_id, &msg, sizeof(msg.mtext), 0);
+	}
+	else
+	{
+		printf("protocol %s doesn't exist!\n", argv[1]);
+		exit(1);
+	}
+}
